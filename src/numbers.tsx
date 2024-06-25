@@ -1,13 +1,39 @@
-import { Component, For, Show, createMemo, createSignal } from "solid-js";
+import {
+  Component,
+  Show,
+  createMemo,
+  createSignal,
+  mergeProps,
+} from "solid-js";
 import { createStore, produce } from "solid-js/store";
 
-const TEST_NUMBER = 10_000.25;
+const TEST_NUMBER = -10_000.25;
 const DECIMAL = ",";
 const GROUP = ".";
 
 const DECIMAL_SYMBOL = ".";
 
-export const Numbers: Component = () => {
+type Props = {
+  locale: string;
+  amount: number;
+  currency: string;
+  options?: Omit<Intl.NumberFormatOptions, "style">;
+};
+export const Numbers: Component<Props> = (initialProps) => {
+  const defaultProps: Props = {
+    locale: "default",
+    amount: 1234.56,
+    currency: "EUR",
+  };
+
+  const props = mergeProps(defaultProps, initialProps, {
+    options: { ...initialProps.options, style: "currency" },
+  });
+
+  // const reference = createMemo(() => {
+  //   Intl.NumberFormat(props.locale, props.options).formatToParts(TEST_NUMBER);
+  // });
+
   const [locale, setLocale] = createSignal("default");
 
   const formatter = createMemo(
@@ -66,10 +92,7 @@ export const Numbers: Component = () => {
       <input
         class="input-transitional"
         type="text"
-        value={
-          /*@once*/
-          value.formatted
-        }
+        value={value.formatted}
         inputMode="decimal"
         onClick={trackCursor}
         onKeyUp={trackCursor}
@@ -144,23 +167,15 @@ export const Numbers: Component = () => {
 
               let newIndex = reverseIndex;
 
-              // console.log(
-              //   "meh",
-              //   extractedInputValue,
-              //   currentSelectionStart,
-              //   newIndex
-              // );
-
               if (currentSelectionStart === 0) {
                 newIndex = 0;
-              } else {
-                if (
-                  !floatRegeExp.test(
-                    value.formatted.at(reverseIndex - 1) || "0"
-                  )
-                ) {
-                  newIndex--;
-                }
+              }
+
+              if (
+                currentSelectionStart === 0 &&
+                !floatRegeExp.test(value.formatted.at(reverseIndex - 1) || "0")
+              ) {
+                newIndex--;
               }
 
               ev.currentTarget.setSelectionRange(newIndex, newIndex);
